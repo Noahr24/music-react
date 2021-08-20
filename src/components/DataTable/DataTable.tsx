@@ -1,5 +1,14 @@
-import React from 'react';
-import { DataGrid, GridColDef, GridValueGetterParams } from '@material-ui/data-grid';
+import React, {useState} from 'react';
+import { DataGrid, GridColDef, GridRowModel, GridValueGetterParams } from '@material-ui/data-grid';
+import { server_calls } from '../../api'; 
+import { useGetData } from '../../custom-hooks'; 
+import { Button,Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle } from '@material-ui/core'; 
+import { MusicForm } from '../../components/MusicForm';
+
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 90 },
@@ -23,23 +32,59 @@ const columns: GridColDef[] = [
         editable: true
     }
 ];
-const rows = [
-    { id: 1, artist: 'J Cole', album: 'The Offseason', tracks: 12 },
-    { id: 2, artist: 'J Cole', album: '2014 Forest Hills Drive', tracks: 13 },
-    { id: 3, artist: 'J Cole', album: 'Cole World: The Sideline Story', tracks: 16 },
-    { id: 4, artist: 'Eminem', album: 'The Eminem Show', tracks: 19 },
-    { id: 5, artist: 'Eminem', album: 'Recovery', tracks: 17 },
-    { id: 6, artist: 'Eminem', album: 'Encore', tracks: 23 },
-    { id: 7, artist: 'Eminem', album: 'The Marshall Mathers LP', tracks: 18 },
-    { id: 8, artist: 'Kanye West', album: '808s and Heartbreak', tracks: 12 },
-    { id: 9, artist: 'Kanye West', album: 'My Beautiful Dark Twisted Fantasy', tracks: 13 },
-];
+interface gridData{
+    id?:string;
+}
 
-export const DataTable = () => {
+
+export const DataTable =  () => {
+
+    let { musicData, getData } = useGetData();
+    let [open, setOpen] = useState(false);
+    let [gridData, setData] = useState<gridData>({id:''});
+
+    let handleOpen = () => {
+        setOpen(true)
+    }
+
+    let handleClose = () => {
+        setOpen(false)
+    }
+
+    let deleteData = () => {
+        server_calls.delete(gridData.id!)
+        getData()
+    }
+
+    let handleCheckbox = (id:GridRowModel) =>{
+        if(id[0] === undefined){
+            setData({id:''})
+        }else{
+            setData({id:id[0].toString()})
+        }
+    
+    }
+
     return (
-        <div style={{height: 700, width: '100%'}}>
-            <h2>Rap albums</h2>
-            <DataGrid rows={rows} columns={columns} pageSize={rows.length} checkboxSelection />
+        <div style={{ height: 400, width: '100%' }}>
+            <h2>Music</h2>
+            <DataGrid rows={musicData} columns={columns} pageSize={5} checkboxSelection onSelectionModelChange = { handleCheckbox } />
+
+        <Button onClick={handleOpen}>Update</Button>
+        <Button variant="contained" color="secondary" onClick={deleteData}>Delete</Button>
+
+            {/*Dialog Pop Up begin */}
+        <Dialog open={open} onClose={handleClose} aria-labelledby="form-dialog-title">
+            <DialogTitle id="form-dialog-title">Update Music</DialogTitle>
+            <DialogContent>
+            <DialogContentText>Update Music</DialogContentText>
+                <MusicForm id={gridData.id!}/>
+            </DialogContent>
+            <DialogActions>
+            <Button onClick = {handleClose} color="primary">Cancel</Button>
+            <Button onClick={handleClose} color = "primary">Done</Button> 
+            </DialogActions>
+        </Dialog>
         </div>
-    )
+        );
 }
